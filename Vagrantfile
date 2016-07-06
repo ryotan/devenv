@@ -83,7 +83,8 @@ Vagrant.configure("2") do |config|
     ansible.provisioning_path = "/home/vagrant/sync/provision"
     ansible.inventory_path = "inventory/local"
     ansible.playbook = "site.yml"
-    ansible.limit = "ci,its,vcs"
+    ansible.limit = "full"
+    ansible.verbose = "vvv"
   end
 
   if Vagrant.has_plugin?("vagrant-vbguest")

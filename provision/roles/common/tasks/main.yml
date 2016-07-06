@@ -1,12 +1,25 @@
 ---
 
+- name: LANG を {{ locale }} に設定します。
+  become: yes
+  command: localectl set-locale LANG={{ locale }}
+
+- name: タイムゾーンを {{ zone }} に設定します。
+  become: yes
+  command: timedatectl set-timezone {{ zone }}
+
 - name: yumライブラリを更新します。
+  become: yes
   yum:
     name: "*"
     state: latest
 
-- name: LANG を {{ locale }} に設定します。
-  command: localectl set-locale LANG={{ locale }}
-
-- name: タイムゾーンを {{ zone }} に設定します。
-  command: timedatectl set-timezone {{ zone }}
+- name: 基本的なライブラリをインストールします。
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - "@Development Tools"
+    - sudo
+    - java-1.8.0-openjdk-devel

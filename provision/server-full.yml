@@ -1,0 +1,10 @@
+---
+- hosts: full
+  roles:
+    - common
+    - apache
+    - postgresql
+    - redmine
+    - gitlab
+    - jenkins
+    - sonar

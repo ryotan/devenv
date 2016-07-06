@@ -2,3 +2,4 @@
 - include: server-ci.yml
 - include: server-vcs.yml
 - include: server-its.yml
+- include: server-full.yml

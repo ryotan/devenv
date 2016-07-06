@@ -1,0 +1,42 @@
+---
+
+- name: PostgreSQL 9.4のリポジトリをインストールします。
+  become: yes
+  yum:
+    name: http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+    state: present
+
+- name: PostgreSQL 9.4をインストールします。
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - postgresql94-server
+    - postgresql94-contrib
+
+- stat:
+    path: /var/lib/pgsql/9.4/data/postgresql.conf
+  become: yes
+  register: pgconf
+
+- name: PostgreSQLのデータベースを初期化します。
+  become: yes
+  command: /usr/pgsql-9.4/bin/postgresql94-setup initdb
+  when: pgconf.stat.exists == false
+
+- name: PostgreSQLのクライアント認証設定を更新します。
+  become: yes
+  template:
+    src: templates/pg_hba.conf
+    dest: /var/lib/pgsql/9.4/data/pg_hba.conf
+    group: postgres
+    owner: postgres
+    mode: 0600
+
+- name: PostgreSQLを自動起動するように設定して、起動します。
+  become: yes
+  service:
+    name: postgresql-9.4
+    enabled: yes
+    state: restarted
