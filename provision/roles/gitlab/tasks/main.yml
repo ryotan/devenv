@@ -1,0 +1,54 @@
+---
+
+- name: GitLabが依存するライブラリをインストールします。
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - curl
+    - policycoreutils
+    - openssh-server
+    - openssh-clients
+
+- name: sshdを有効化、起動します。
+  become: yes
+  service:
+    name: sshd
+    enabled: yes
+    state: started
+
+
+- stat: path=/usr/bin/gitlab-ctl
+  register: gitlab_file
+
+
+- name: GitLabのyumリポジトリインストールスクリプトをダウンロードします。
+  get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
+    dest: /tmp/gitlab_install_repository.sh
+  when: gitlab_file.stat.exists == false
+
+- name: GitLabのyumリポジトリをインストールします。
+  become: yes
+  command: bash /tmp/gitlab_install_repository.sh
+  when: gitlab_file.stat.exists == false
+
+- name: GitLabをインストールします。
+  become: yes
+  yum:
+    name: gitlab-ce
+    state: latest
+
+- name: GitLabの構成ファイルを配置します。
+  become: yes
+  template:
+    src: templates/gitlab.rb
+    dest: /etc/gitlab/gitlab.rb
+    group: root
+    owner: root
+    mode: 0600
+
+- name: GitLabを構成し、起動します。
+  become: yes
+  command: gitlab-ctl reconfigure
