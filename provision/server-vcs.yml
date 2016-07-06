@@ -1,5 +1,5 @@
 ---
-- hosts: its
+- hosts: vcs
   roles:
     - common
     - apache

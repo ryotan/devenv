@@ -1,1 +1,12 @@
 ---
+
+- name: yumライブラリを更新します。
+  yum:
+    name: "*"
+    state: latest
+
+- name: LANG を {{ locale }} に設定します。
+  command: localectl set-locale LANG={{ locale }}
+
+- name: タイムゾーンを {{ zone }} に設定します。
+  command: timedatectl set-timezone {{ zone }}

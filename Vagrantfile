@@ -81,9 +81,9 @@ Vagrant.configure("2") do |config|
     ansible.install_mode = :pip
     ansible.version = "2.1.0"
     ansible.provisioning_path = "/home/vagrant/sync/provision"
-    ansible.inventory_path = "hosts/local"
+    ansible.inventory_path = "inventory/local"
     ansible.playbook = "site.yml"
-    ansible.limit = "ci,its"
+    ansible.limit = "ci,its,vcs"
   end
 
   if Vagrant.has_plugin?("vagrant-vbguest")
