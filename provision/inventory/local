@@ -1,0 +1,16 @@
+[ci]
+192.168.33.10
+
+[its]
+192.168.33.10
+
+[vcs]
+192.168.33.10
+
+[local:children]
+ci
+its
+vcs
+
+[local:vars]
+ansible_connection=local

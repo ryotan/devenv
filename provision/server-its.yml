@@ -1,0 +1,7 @@
+---
+- hosts: its
+  roles:
+    - common
+    - apache
+    - postgresql
+    - redmine
