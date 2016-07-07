@@ -1,4 +1,5 @@
 ---
 - name: rehash
-  action: shell rbenv rehash
-  remote_user: redmine
+  become: yes
+  become_user: redmine
+  command: bash -c "rbenv rehash"

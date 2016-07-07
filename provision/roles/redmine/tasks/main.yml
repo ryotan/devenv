@@ -1,33 +1,40 @@
 # redmine
 
 - name: Delete redmine-{{ redmine_version }}
+  become: yes
+  become_user: redmine
   file: path=~/redmine state=absent
-  remote_user: redmine
 
 - name: Download redmine
+  become: yes
+  become_user: redmine
   get_url: url=http://www.redmine.org/releases/redmine-{{ redmine_version }}.tar.gz dest=~/redmine-{{ redmine_version }}.tar.gz
-  remote_user: redmine
 
 - name: Extract tar.gz
+  become: yes
+  become_user: redmine
   shell: tar zxvf redmine-{{ redmine_version }}.tar.gz chdir=~
-  remote_user: redmine
 
 - name: Move redmine-{{ redmine_version }} to redmine
+  become: yes
+  become_user: redmine
   shell: mv redmine-{{ redmine_version }} redmine chdir=~
-  remote_user: redmine
 
 - name: Template config/database.yml for PosgreSQL
+  become: yes
+  become_user: redmine
   template: src=database.yml dest=~/redmine/config/database.yml mode=0600
-  remote_user: redmine
 
 # unicorn
 - name: Template Gemfile.local
+  become: yes
+  become_user: redmine
   template: src=Gemfile.local dest=~/redmine/Gemfile.local mode=0644
-  remote_user: redmine
 
 - name: Template config/unicorn.rb
+  become: yes
+  become_user: redmine
   template: src=unicorn.rb.j2 dest=~/redmine/config/unicorn.rb mode=0600
-  remote_user: redmine
 
 - name: mkdir redmine/tmp/pids
   become: yes
@@ -36,21 +43,25 @@
 
 # bundle install
 - name: set jobs 4
+  become: yes
+  become_user: redmine
   shell: bundle config --global --jobs 4 chdir=~/redmine
-  remote_user: redmine
 
 - name: Install pg
+  become: yes
+  become_user: redmine
   shell: bundle config build.pg --with-pg-config=/usr/pgsql-9.4/bin/pg_config chdir=~/redmine
-  remote_user: redmine
 
 - name: Install Bundle
+  become: yes
+  become_user: redmine
   shell: bundle install --path vendor/bundle --without development test chdir=~/redmine
-  remote_user: redmine
 
 #Initialize Secret Token
 - name: Initialize Secret Token
+  become: yes
+  become_user: redmine
   shell: bundle exec rake generate_secret_token chdir=~/redmine
-  remote_user: redmine
 
 # Initialize Database
 - yum:
@@ -74,12 +85,14 @@
   become_user: postgres
 
 - name: Initialize Database
+  become: yes
+  become_user: redmine
   shell: "bundle exec rake db:migrate RAILS_ENV=production chdir=~/redmine"
-  remote_user: redmine
 
 - name: Load Default Data for Japanese
+  become: yes
+  become_user: redmine
   shell: "bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=ja chdir=~/redmine"
-  remote_user: redmine
 
 # Add Redmine as service
 - name: Template nginx/conf.d/redmine.conf

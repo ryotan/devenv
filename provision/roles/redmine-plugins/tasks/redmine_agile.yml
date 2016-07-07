@@ -1,17 +1,20 @@
 ---
 
 - name: unarchive redmine_agile
+  become: yes
+  become_user: redmine
   unarchive:
     src: files/redmine_agile-1_4_1-light.zip
     dest: ~/redmine/plugins/
-  remote_user: redmine
 
 - name: Bundle install
+  become: yes
+  become_user: redmine
   command: "{{ item }} chdir=~/redmine"
-  remote_user: redmine
   with_items:
     - bundle install --without development test
     - bundle exec rake redmine:plugins NAME=redmine_agile RAILS_ENV=production
 
 - name: Restart redmine
+  become: yes
   service: name=redmine state=restarted
