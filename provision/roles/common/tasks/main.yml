@@ -22,4 +22,43 @@
   with_items:
     - "@Development Tools"
     - sudo
-    - java-1.8.0-openjdk-devel
+    - gettext-devel
+    - expat-devel
+    - curl-devel
+    - zlib-devel
+    - perl-devel
+    - openssl-devel
+    - subversion-perl
+    - make
+    - gcc
+
+- name: インストールされているGitのバージョンを確認します。
+  command: git --version
+  changed_when: false
+  failed_when: false
+  register: git_installed_version
+
+- name: Gitの更新が必要かどうか判定します。
+  set_fact:
+    git_require_install: 'git_installed_version|success and (git_installed_version.stdout | regex_replace("^.*?([0-9\.]+)$", "\\1") | version_compare("2.9.0", operator="!="))'
+
+- name: Gitのソースコードをダウンロードします。
+  unarchive:
+    src: https://www.kernel.org/pub/software/scm/git/git-2.9.0.tar.gz
+    dest: /tmp
+    copy: no
+    creates: /tmp/git-2.9.0/Makefile
+  when:  git_installed_version|failed or git_require_install
+  # HACK: https://github.com/ansible/ansible-modules-core/issues/2936
+  environment:
+    LANG: "C"
+    LC_ALL: "C"
+    LC_MESSAGES: "C"
+
+- name: Gitをインストールします。
+  become: yes
+  command: make prefix=/usr/local {{ item }} chdir=/tmp/git-2.9.0
+  with_items:
+    - all
+    - install
+  when:  git_installed_version|failed or git_require_install

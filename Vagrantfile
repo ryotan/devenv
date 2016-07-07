@@ -85,7 +85,7 @@ Vagrant.configure("2") do |config|
     ansible.inventory_path = "inventory/local"
     ansible.playbook = "site.yml"
     ansible.limit = "full"
-    ansible.verbose = "vvv"
+    # ansible.verbose = "vvv"
   end
 
   if Vagrant.has_plugin?("vagrant-vbguest")

@@ -2,9 +2,12 @@
 - hosts: full
   roles:
     - common
-    - apache
+    - nginx
     - postgresql
+    - ruby
+    - user
     - redmine
+    - redmine-plugins
     - gitlab
     - jenkins
     - sonar

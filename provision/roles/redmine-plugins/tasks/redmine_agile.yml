@@ -1,0 +1,17 @@
+---
+
+- name: unarchive redmine_agile
+  unarchive:
+    src: files/redmine_agile-1_4_1-light.zip
+    dest: ~/redmine/plugins/
+  remote_user: redmine
+
+- name: Bundle install
+  command: "{{ item }} chdir=~/redmine"
+  remote_user: redmine
+  with_items:
+    - bundle install --without development test
+    - bundle exec rake redmine:plugins NAME=redmine_agile RAILS_ENV=production
+
+- name: Restart redmine
+  service: name=redmine state=restarted
