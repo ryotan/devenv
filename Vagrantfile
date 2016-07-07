@@ -58,7 +58,7 @@ Vagrant.configure("2") do |config|
   # View the documentation for the provider you are using for more
   # information on available options.
   config.vm.provider "virtualbox" do |vb|
-    vb.name = ENV['VB_NAME'] || "ci-example-gitlab"
+    vb.name = ENV['VB_NAME'] || "devenv"
     vb.memory = "2048"
     vb.cpus = "4"
     vb.customize ["modifyvm", :id, "--ioapic", "on"]
