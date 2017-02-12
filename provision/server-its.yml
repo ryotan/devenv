@@ -2,9 +2,4 @@
 - hosts: its
   roles:
     - common
-    - apache
-    - postgresql
-    - ruby
-    - user
     - redmine
-    - redmine-plugins

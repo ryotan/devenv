@@ -1,0 +1,21 @@
+---
+
+- name: redmine_absolute_datesがインストールされているかを確認します。
+  stat:
+    path: "{{ redmine_home }}/plugins/redmine_absolute_dates"
+  register: redmine_absolute_dates
+
+- name: Download redmine_absolute_dates 
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  git:
+    repo: https://github.com/suer/redmine_absolute_dates.git
+    dest: "{{ redmine_home }}/plugins/redmine_absolute_dates"
+  when: not redmine_absolute_dates.stat.exists
+
+- name: Restart redmine
+  become: yes
+  service:
+    name: redmine
+    state: restarted
+  when: not redmine_absolute_dates.stat.exists

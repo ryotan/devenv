@@ -1,0 +1,7 @@
+---
+- name: rehash
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  command:
+    rbenv rehash
+    executable=/bin/bash

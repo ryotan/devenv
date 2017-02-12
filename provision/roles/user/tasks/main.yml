@@ -1,27 +1,20 @@
 ---
-- name: Add Group {{ group_name }}
+- name: グループ {{ group_name }} を作成します。
   become: yes
-  group: name={{ group_name }} state=present
+  group:
+    name: "{{ group_name }}"
+    state: present
 
-- name: Add User {{ user_name }}
+- name: ユーザー {{ user_name }} を作成します。
   become: yes
-  user: name={{ user_name }} group={{ group_name }}
+  user:
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    state: present
 
-- name: Copy /etc/sudoers.d/sudo_{{ user_name }}
+- name: sudo権限を追加します。
   become: yes
-  template: src=sudo_{{ user_name }}.j2 dest=/etc/sudoers.d/{{ user_name }} mode=0440
-
-- name: Create ~/.ssh
-  become: yes
-  file:
-    path: "{{ user_home }}/.ssh"
-    group: redmine
-    owner: redmine
-    mode:  0600
-    state: directory
-
-# - name: Copy ssh_pub_key
-#   become: yes
-#   shell: "cp /root/.ssh/authorized_keys {{ user_home }}/.ssh/authorized_keys 
-#          && chown {{ user_name }}:{{ group_name }} {{ user_home }}/.ssh/authorized_keys 
-#          && chmod 600 {{ user_home }}/.ssh/authorized_keys"
+  template:
+    src: "{{ sudoers }}"
+    dest: /etc/sudoers.d/{{ user_name }} mode=0440
+  when: sudoers is defined

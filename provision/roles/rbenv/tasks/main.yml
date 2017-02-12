@@ -1,0 +1,105 @@
+---
+
+- name: rbenvがインストールされているか確認します。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  stat:
+    path: ~/.rbenv
+  register: rbenv
+
+- name: rbenvをダウンロードします。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  git:
+    repo: https://github.com/sstephenson/rbenv.git
+    dest: ~/.rbenv
+  when: rbenv.stat.exists == false
+
+- name: rbenvをインストールします。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  lineinfile:
+    dest: ~/.bashrc
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - export PATH="$HOME/.rbenv/bin:$PATH"
+    - eval "$(rbenv init -)"
+
+- name: ruby-buildがインストールされているか確認します。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  stat:
+    path: ~/.rbenv/plugins/ruby-build
+  register: ruby_build
+
+- name: ruby-buildをダウンロードします。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  git:
+    repo: https://github.com/sstephenson/ruby-build.git
+    dest: ~/.rbenv/plugins/ruby-build
+  when: ruby_build.stat.exists == false
+
+- name: ruby-buildをインストールします。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  command:
+    ~/.rbenv/plugins/ruby-build/install.sh
+    chdir=~/.rbenv/plugins/ruby-build
+  environment:
+      PREFIX: ~/local/src/
+  when: ruby_build.stat.exists == false
+
+- name: Ruby {{ ruby_version }} がインストールされているか確認します。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  stat:
+    path: ~/.rbenv/versions/{{ ruby_version }}
+  register: ruby_ver
+
+- name: Ruby のビルドに必要なライブラリをインストールします。
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - zlib
+    - zlib-devel
+    - gcc-c++
+    - patch
+    - readline
+    - readline-devel
+    - libyaml-devel
+    - libffi-devel
+    - openssl-devel
+    - make
+    - bzip2
+    - autoconf
+    - automake
+    - libtool
+    - bison
+    - curl
+    - sqlite-devel
+  when: ruby_ver.stat.exists == false
+
+- name: Ruby {{ ruby_version }} をインストールします。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  shell: source ~/.bashrc && rbenv install {{ ruby_version }}
+  when: ruby_ver.stat.exists == false
+
+- name: Ruby {{ ruby_version }} が利用されるように設定します。
+  become: yes
+  become_user: "{{ rbenv_user_name }}"
+  shell: source ~/.bashrc && rbenv global {{ ruby_version }}
+  notify: rehash
+  when: ruby_ver.stat.exists == false
+
+- name: gem install
+  become: yes
+  become_user: redmine
+  shell: source ~/.bashrc && rbenv exec gem install bundler --no-ri --no-rdoc
+  notify: rehash
+  when: ruby_ver.stat.exists == false
+

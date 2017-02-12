@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: user
+    user_name: "{{ rbenv_user_name }}"
+    group_name: "{{ rbenv_group_name }}"

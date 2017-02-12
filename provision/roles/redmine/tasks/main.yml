@@ -1,113 +1,128 @@
-# redmine
+---
 
-- name: Delete redmine-{{ redmine_version }}
-  become: yes
-  become_user: redmine
-  file: path=~/redmine state=absent
+- name: Redmineがインストールされているかどうかを確認します。
+  stat:
+    path: "{{ redmine_home }}"
+  register: redmine_install_dir
 
-- name: Download redmine
+- name: Redmineのインストールに必要なライブラリをインストールします。
   become: yes
-  become_user: redmine
-  get_url: url=http://www.redmine.org/releases/redmine-{{ redmine_version }}.tar.gz dest=~/redmine-{{ redmine_version }}.tar.gz
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - "@Development Tools"
+    - openssl-devel
+    - readline-devel
+    - zlib-devel
+    - curl-devel
+    - libyaml-devel
+    - libffi-devel
+    - ImageMagick
+    - ImageMagick-devel
+    - ipa-pgothic-fonts
 
-- name: Extract tar.gz
+- name: Redmineのインストールディレクトリを作成します。
   become: yes
-  become_user: redmine
-  shell: tar zxvf redmine-{{ redmine_version }}.tar.gz chdir=~
+  file:
+    # HACK: https://github.com/ansible/ansible-modules-core/issues/2936
+    path: "{{ redmine_home }}/redmine-{{ redmine_version }}"
+    owner: "{{ redmine_user_name }}"
+    group: "{{ redmine_group_name }}"
+    state: directory
+  when: not redmine_install_dir.stat.exists
 
-- name: Move redmine-{{ redmine_version }} to redmine
+- name: Redmine {{ redmine_version }} をダウンロードします。
   become: yes
-  become_user: redmine
-  shell: mv redmine-{{ redmine_version }} redmine chdir=~
+  become_user: "{{ redmine_user_name }}"
+  unarchive:
+    src: http://www.redmine.org/releases/redmine-{{ redmine_version }}.tar.gz
+    dest: "{{ redmine_home }}"
+    creates: "{{ redmine_home }}/Gemfile"
+    extra_opts: --strip-components=1
+    copy: no
+  # HACK: https://github.com/ansible/ansible-modules-core/issues/2936
+  environment:
+    LANG: "C"
+    LC_ALL: "C"
+    LC_MESSAGES: "C"
+  when: not redmine_install_dir.stat.exists
 
-- name: Template config/database.yml for PosgreSQL
+- name: Redmineのデータベース設定を配置します。
   become: yes
-  become_user: redmine
-  template: src=database.yml dest=~/redmine/config/database.yml mode=0600
+  become_user: "{{ redmine_user_name }}"
+  template:
+    src: database.yml
+    dest: "{{ redmine_home }}/config/database.yml"
+    mode: 0600
+  when: not redmine_install_dir.stat.exists
 
 # unicorn
-- name: Template Gemfile.local
+- name: Unicornインストール用のGemfileを配置します。
   become: yes
-  become_user: redmine
-  template: src=Gemfile.local dest=~/redmine/Gemfile.local mode=0644
+  become_user: "{{ redmine_user_name }}"
+  template:
+    src: Gemfile.local
+    dest: "{{ redmine_home }}/Gemfile.local"
+    mode: 0644
+  when: not redmine_install_dir.stat.exists
 
 - name: Template config/unicorn.rb
   become: yes
-  become_user: redmine
-  template: src=unicorn.rb.j2 dest=~/redmine/config/unicorn.rb mode=0600
+  become_user: "{{ redmine_user_name }}"
+  template:
+    src: unicorn.rb.j2
+    dest: "{{ redmine_home }}/config/unicorn.rb"
+    mode: 0600
+  when: not redmine_install_dir.stat.exists
 
 - name: mkdir redmine/tmp/pids
   become: yes
-  become_user: redmine
-  file: path=~/redmine/tmp/pids state=directory owner=redmine group=redmine mode=0775
+  become_user: "{{ redmine_user_name }}"
+  file:
+    path: "{{ redmine_home }}/tmp/pids"
+    state: directory
+    mode: 0775
+  when: not redmine_install_dir.stat.exists
 
 # bundle install
 - name: set jobs 4
   become: yes
-  become_user: redmine
-  shell: bundle config --global --jobs 4 chdir=~/redmine
-
-- name: Install pg
-  become: yes
-  become_user: redmine
-  shell: bundle config build.pg --with-pg-config=/usr/pgsql-9.4/bin/pg_config chdir=~/redmine
-
-- name: Install Bundle
-  become: yes
-  become_user: redmine
-  shell: bundle install --path vendor/bundle --without development test chdir=~/redmine
-
-#Initialize Secret Token
-- name: Initialize Secret Token
-  become: yes
-  become_user: redmine
-  shell: bundle exec rake generate_secret_token chdir=~/redmine
-
-# Initialize Database
-- yum:
-    name: python-psycopg2
-    state: latest
-  become: yes
-
-- postgresql_user: name=redmine
-                   password=redmine
-                   role_attr_flags=NOINHERIT
-  become: yes
-  become_user: postgres
-
-- postgresql_db: name=redmine
-                 encoding='UTF-8'
-                 owner=redmine
-                 lc_collate='ja_JP.UTF-8'
-                 lc_ctype='ja_JP.UTF-8'
-                 template='template0'
-  become: yes
-  become_user: postgres
-
-- name: Initialize Database
-  become: yes
-  become_user: redmine
-  shell: "bundle exec rake db:migrate RAILS_ENV=production chdir=~/redmine"
-
-- name: Load Default Data for Japanese
-  become: yes
-  become_user: redmine
-  shell: "bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=ja chdir=~/redmine"
-
-# Add Redmine as service
-- name: Template nginx/conf.d/redmine.conf
-  become: yes
-  template: src=nginx_redmine.conf.j2 dest=/etc/nginx/conf.d/redmine.conf mode=0644
+  become_user: "{{ redmine_user_name }}"
+  shell:
+    . ~/.bashrc && {{ item }}
+    chdir={{ redmine_home }}
+  with_items:
+    - bundle config --global --jobs 4
+    - bundle config build.pg --with-pg-config=/usr/pgsql-9.4/bin/pg_config
+    - bundle install --without development test
+    - bundle exec rake generate_secret_token
+    - bundle exec rake db:migrate
+    - bundle exec rake redmine:load_default_data
+  environment:
+    RAILS_ENV: production
+    REDMINE_LANG: ja
+#  when: not redmine_install_dir.stat.exists
 
 # Add Config for Redmine
 - name: Template /etc/init.d/redmine
   become: yes
-  template: src=init_redmine.j2 dest=/etc/init.d/redmine mode=0755 owner=root group=root
+  template:
+    src: init_redmine.j2
+    dest: /etc/init.d/redmine
+    mode: 0755
+    owner: root
+    group: root
+  when: not redmine_install_dir.stat.exists
 
 - name: ensure redmine is running automatically at boot time
   become: yes
-  service: name=redmine state=started enabled=yes
+  service:
+    name: redmine
+    state: restarted
+    enabled: yes
+  when: not redmine_install_dir.stat.exists
 
-- name: restart nginx
-  become: yes
-  service: name=nginx state=restarted
+- include: plugins/redmine_backlogs.yml
+- include: plugins/redmine_absolute_dates.yml
+- include: plugins/redmine_oauth_provider.yml

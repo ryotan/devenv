@@ -14,6 +14,8 @@
   with_items:
     - postgresql94-server
     - postgresql94-contrib
+    - postgresql94-devel
+    - python-psycopg2
 
 - stat:
     path: /var/lib/pgsql/9.4/data/postgresql.conf
@@ -40,3 +42,22 @@
     name: postgresql-9.4
     enabled: yes
     state: restarted
+
+- name: データベースユーザを作成します。
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: "{{ postgres_db_user }}"
+    password: "{{ postgres_db_password }}"
+    role_attr_flags: NOINHERIT
+
+- name: データベースを作成します。
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: "{{ postgres_database }}"
+    encoding: UTF-8
+    owner: "{{ postgres_db_user }}"
+    lc_collate: ja_JP.UTF-8
+    lc_ctype: ja_JP.UTF-8
+    template: template0

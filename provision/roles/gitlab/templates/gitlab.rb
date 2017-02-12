@@ -167,21 +167,21 @@ gitlab_rails['incoming_email_enabled'] = false
 ## For setting up omniauth
 ## see https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/README.md#omniauth-google-twitter-github-login
 
-# gitlab_rails['omniauth_enabled'] = false
-# gitlab_rails['omniauth_allow_single_sign_on'] = ['saml']
+gitlab_rails['omniauth_enabled'] = true
+gitlab_rails['omniauth_allow_single_sign_on'] = true
 # gitlab_rails['omniauth_auto_sign_in_with_provider'] = 'saml'
-# gitlab_rails['omniauth_block_auto_created_users'] = true
+gitlab_rails['omniauth_block_auto_created_users'] = false
 # gitlab_rails['omniauth_auto_link_ldap_user'] = false
 # gitlab_rails['omniauth_auto_link_saml_user'] = false
 # gitlab_rails['omniauth_external_providers'] = ['twitter', 'google_oauth2']
-# gitlab_rails['omniauth_providers'] = [
-#   {
-#     "name" => "google_oauth2",
-#     "app_id" => "YOUR APP ID",
-#     "app_secret" => "YOUR APP SECRET",
-#     "args" => { "access_type" => "offline", "approval_prompt" => "" }
-#   }
-# ]
+gitlab_rails['omniauth_providers'] = [
+  {
+    "name" => "redmine",
+    "app_id" => "YOUR APP ID",
+    "app_secret" => "YOUR APP SECRET",
+    "args" => { "access_type" => "offline", "approval_prompt" => "" }
+  }
+]
 #
 # If you setup bitbucket importer under omniauth providers you will need to add the keys
 # which will allow connection between bitbucket and gitlab.

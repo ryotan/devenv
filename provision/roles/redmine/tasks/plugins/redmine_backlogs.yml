@@ -1,0 +1,57 @@
+---
+
+- name: Backlogsプラグインがインストールされているかを確認します。
+  stat:
+    path: "{{ redmine_home }}/plugins/redmine_backlogs"
+  register: redmine_backlogs
+
+- name: download redmine_backlogs
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  git:
+    repo: https://github.com/backlogs/redmine_backlogs.git
+    dest: "{{ redmine_home }}/plugins/redmine_backlogs"
+    version: feature/redmine3
+  when: not redmine_backlogs.stat.exists
+
+- name: テーマがインストールされているかを確認します。
+  stat:
+    path: "{{ redmine_home }}/public/themes/flat"
+  register: flat_theme
+
+- name: download flat_theme
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  git:
+    repo: https://github.com/tsi/redmine-theme-flat.git
+    dest: "{{ redmine_home }}/public/themes/flat"
+  when: not flat_theme.stat.exists
+
+- name: delete unnecesarry gems
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  lineinfile:
+    dest: "{{ redmine_home }}/plugins/redmine_backlogs/Gemfile"
+    regexp: "{{ item }}"
+    state: absent
+  with_items:
+    - ".*gem.*test-unit.*"
+    - ".*gem.*capybara.*"
+#  when: not redmine_backlogs.stat.exists
+
+- name: Bundle install
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  shell:
+    . ~/.bashrc && bundle exec rake redmine:backlogs:install task_tracker=タスク story_trackers=ストーリー labels=no
+    chdir={{ redmine_home }}
+  environment:
+    RAILS_ENV: production
+#  when: not redmine_backlogs.stat.exists
+
+- name: Restart redmine
+  become: yes
+  service:
+    name: redmine
+    state: restarted
+#  when: not redmine_backlogs.stat.exists

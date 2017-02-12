@@ -1,0 +1,14 @@
+---
+dependencies:
+  - role: rbenv
+    rbenv_group_name: "{{ redmine_group_name }}"
+    rbenv_user_name: "{{ redmine_user_name }}"
+
+  - role: postgresql
+    postgres_db_user: "{{ redmine_db_user }}"
+    postgres_db_password: "{{ redmine_db_password }}"
+    postgres_database: "{{ redmine_db_database }}"
+
+  - role: nginx
+    nginx_conf_src: roles/redmine/templates/nginx/redmine.conf
+    nginx_conf_dest: redmine.conf

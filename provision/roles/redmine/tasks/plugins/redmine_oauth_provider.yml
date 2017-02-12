@@ -1,0 +1,53 @@
+---
+
+- name: oauth_providerプラグインがインストールされているかを確認します。
+  stat:
+    path: "{{ redmine_home }}/plugins/redmine_oauth_provider"
+  register: redmine_oauth_priver
+
+- name: gem install oauth-plugin
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  shell:
+    . ~/.bashrc && rbenv exec gem install oauth-plugin
+  when: not redmine_oauth_priver.stat.exists
+
+- name: Download redmine_oauth_provider
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  git:
+    repo: https://github.com/suer/redmine_oauth_provider.git
+    dest: "{{ redmine_home }}/plugins/redmine_oauth_provider"
+    update: no
+    version: HEAD
+  when: not redmine_oauth_priver.stat.exists
+
+- name: Template redmine_oauth_provider/redmine_oauth_provider.rb
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  template:
+    src: redmine_oauth_provider/redmine_oauth_provider.rb
+    dest: "{{ redmine_home }}/config/initializers/redmine_oauth_provider.rb"
+    mode: 0644
+  tags: test
+  when: not redmine_oauth_priver.stat.exists
+
+- name: Bundle install
+  become: yes
+  become_user: "{{ redmine_user_name }}"
+  shell:
+    . ~/.bashrc && {{ item }}
+    chdir={{ redmine_home }}
+  with_items:
+    - bundle install --without development test
+    - bundle exec rake redmine:plugins:migrate
+  environment:
+    RAILS_ENV: production
+  when: not redmine_oauth_priver.stat.exists
+
+- name: Restart redmine
+  become: yes
+  service:
+    name: redmine
+    state: restarted
+  when: not redmine_oauth_priver.stat.exists

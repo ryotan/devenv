@@ -2,7 +2,5 @@
 - hosts: ci
   roles:
     - common
-    - apache
-    - postgresql
     - jenkins
     - sonar

@@ -1,5 +1,0 @@
----
-- name: rehash
-  become: yes
-  become_user: redmine
-  command: bash -c "rbenv rehash"

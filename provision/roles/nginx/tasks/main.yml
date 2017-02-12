@@ -11,3 +11,17 @@
   yum:
     name: nginx
     state: latest
+
+- name: Template nginx/conf.d/
+  become: yes
+  template:
+    src: "{{ nginx_conf_src }}"
+    dest: /etc/nginx/conf.d/{{ nginx_conf_dest }}
+    mode: 0644
+
+- name: Nginxを有効化して起動します。
+  become: yes
+  service:
+    name: nginx
+    enabled: yes
+    state: started

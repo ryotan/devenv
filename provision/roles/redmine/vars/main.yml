@@ -1,2 +1,11 @@
-redmine_version: 3.3.0
-redmine_home: /home/redmine/redmine
+---
+
+redmine_version: 3.0.7
+redmine_home: /opt/redmine
+
+redmine_group_name: redmine
+redmine_user_name: redmine
+
+redmine_db_user: "{{ redmine_user_name }}"
+redmine_db_password: "{{ redmine_user_name }}"
+redmine_db_database: "{{ redmine_user_name }}"
